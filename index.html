@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fitcoin Pro</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { background: #000; color: white; font-family: sans-serif; text-align: center; margin: 0; overflow: hidden; }
+        .stat-box { background: #222; padding: 15px; border-radius: 15px; margin: 20px; border: 1px solid #f3ba2f; }
+        .coin { width: 200px; height: 200px; margin: 40px auto; background: url('https://cdn-icons-png.flaticon.com/512/6831/6831000.png') no-repeat center; background-size: contain; transition: 0.1s; }
+        .coin:active { transform: scale(0.9); }
+        .energy-bar { width: 80%; height: 10px; background: #333; border-radius: 5px; margin: 10px auto; }
+        .energy-fill { background: #f3ba2f; height: 100%; width: 100%; border-radius: 5px; transition: 0.3s; }
+    </style>
+</head>
+<body>
+    <div class="stat-box">
+        <h1 id="score">0</h1>
+        <p>نقاط فيتكوين</p>
+    </div>
+    <div class="coin" id="coin"></div>
+    <div class="energy-bar"><div class="energy-fill" id="energyFill"></div></div>
+    <p id="energyText">الطاقة: 1000/1000</p>
+    <div style="margin-top: 20px;">
+        <span id="steps">0</span> خطوات | الوزن: 60 كجم
+    </div>
+
+    <script>
+        let score = parseInt(localStorage.getItem('f_score')) || 0;
+        let energy = 1000;
+        let steps = 0;
+
+        const update = () => {
+            document.getElementById('score').innerText = score;
+            document.getElementById('energyFill').style.width = (energy/10) + '%';
+            document.getElementById('energyText').innerText = `الطاقة: ${energy}/1000`;
+            localStorage.setItem('f_score', score);
+        };
+
+        document.getElementById('coin').onclick = () => {
+            if(energy > 0) { score++; energy--; update(); }
+        };
+
+        // حساس الحركة للتمرين
+        window.addEventListener('devicemotion', (e) => {
+            let acc = e.accelerationIncludingGravity;
+            if (Math.abs(acc.x) > 15 || Math.abs(acc.y) > 15) {
+                steps++; score += 5; document.getElementById('steps').innerText = steps; update();
+            }
+        });
+
+        setInterval(() => { if(energy < 1000) { energy += 2; update(); } }, 1000);
+        window.Telegram.WebApp.ready();
+        update();
+    </script>
+</body>
+</html>
