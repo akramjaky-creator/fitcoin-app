@@ -3,55 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fitcoin Pro</title>
+    <title>FitCoin Pro</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://sad.adsgram.ai/js/adsgram-ad-sdk.js"></script>
     <style>
-        body { background: #000; color: white; font-family: sans-serif; text-align: center; margin: 0; overflow: hidden; }
-        .stat-box { background: #222; padding: 15px; border-radius: 15px; margin: 20px; border: 1px solid #f3ba2f; }
-        .coin { width: 200px; height: 200px; margin: 40px auto; background: url('https://cdn-icons-png.flaticon.com/512/6831/6831000.png') no-repeat center; background-size: contain; transition: 0.1s; }
-        .coin:active { transform: scale(0.9); }
-        .energy-bar { width: 80%; height: 10px; background: #333; border-radius: 5px; margin: 10px auto; }
-        .energy-fill { background: #f3ba2f; height: 100%; width: 100%; border-radius: 5px; transition: 0.3s; }
+        :root { --main: #f3ba2f; --bg: #0b0e11; --card: #1c1f24; }
+        body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; }
+        .header { display: flex; width: 100%; justify-content: space-around; padding: 15px 0; background: var(--card); border-bottom: 2px solid var(--main); }
+        .balance { font-size: 3.5rem; font-weight: bold; margin: 20px 0; color: var(--main); }
+        .character-zone { width: 250px; height: 250px; background: radial-gradient(circle, #3a3f47, #1c1f24); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 100px; border: 8px solid #2d333b; cursor: pointer; transition: 0.1s; box-shadow: 0 0 30px rgba(243,186,47,0.2); }
+        .character-zone:active { transform: scale(0.9); }
+        .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: var(--card); padding: 15px 0; justify-content: space-around; }
+        .nav-item { text-align: center; font-size: 0.8rem; color: #888; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div class="stat-box">
-        <h1 id="score">0</h1>
-        <p>نقاط فيتكوين</p>
+    <div class="header">
+        <div>الربح/ساعة<br><span id="pph" style="color:var(--main)">+150</span></div>
+        <div>المستوى<br><span id="lvl" style="color:var(--main)">مبتدئ</span></div>
     </div>
-    <div class="coin" id="coin"></div>
-    <div class="energy-bar"><div class="energy-fill" id="energyFill"></div></div>
-    <p id="energyText">الطاقة: 1000/1000</p>
-    <div style="margin-top: 20px;">
-        <span id="steps">0</span> خطوات | الوزن: 60 كجم
+    <div class="balance" id="score">0</div>
+    <div class="character-zone" id="tapBtn">🐹</div>
+    <div class="nav">
+        <div class="nav-item">🏠<br>الرئيسية</div>
+        <div class="nav-item" onclick="showAd()">📺<br>أرباح</div>
+        <div class="nav-item" onclick="invite()">👥<br>الأصدقاء</div>
     </div>
-
     <script>
-        let score = parseInt(localStorage.getItem('f_score')) || 0;
-        let energy = 1000;
-        let steps = 0;
+        let score = parseInt(localStorage.getItem('fscore')) || 0;
+        
+        // استخدام الرقم الذي استخرجته أنت من الصورة الأخيرة
+        const blockId = "20473"; 
 
-        const update = () => {
-            document.getElementById('score').innerText = score;
-            document.getElementById('energyFill').style.width = (energy/10) + '%';
-            document.getElementById('energyText').innerText = `الطاقة: ${energy}/1000`;
-            localStorage.setItem('f_score', score);
-        };
+        const AdController = window.Adsgram ? window.Adsgram.init({ blockId: blockId }) : null;
+        
+        function update() {
+            document.getElementById('score').innerText = score.toLocaleString();
+            localStorage.setItem('fscore', score);
+        }
 
-        document.getElementById('coin').onclick = () => {
-            if(energy > 0) { score++; energy--; update(); }
-        };
-
-        // حساس الحركة للتمرين
-        window.addEventListener('devicemotion', (e) => {
-            let acc = e.accelerationIncludingGravity;
-            if (Math.abs(acc.x) > 15 || Math.abs(acc.y) > 15) {
-                steps++; score += 5; document.getElementById('steps').innerText = steps; update();
-            }
+        document.getElementById('tapBtn').addEventListener('click', () => { 
+            score += 10; 
+            update(); 
         });
 
-        setInterval(() => { if(energy < 1000) { energy += 2; update(); } }, 1000);
-        window.Telegram.WebApp.ready();
+        function showAd() {
+            if(!AdController) return alert("جاري الاتصال بـ AdsGram...");
+            AdController.show().then(() => {
+                score += 5000; 
+                update();
+                alert("مبروك! ربحت 5000 نقطة لمشاهدة الإعلان");
+            }).catch(() => alert("يجب إكمال الفيديو للحصول على المكافأة"));
+        }
+
+        function invite() {
+            const url = "https://t.me/Botcoinfit_bot";
+            window.open(`https://t.me/share/url?url=${url}&text=اربح معي العملات بالمشي!`);
+        }
         update();
     </script>
 </body>
