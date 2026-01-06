@@ -1,42 +1,177 @@
 <!DOCTYPE html>
-<html>
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>FitCoin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Core-X FitCoin Edition</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://sad.adsgram.ai/js/adsgram-ad-sdk.js"></script>
     <style>
-        body { background: #000; color: #f3ba2f; text-align: center; font-family: Arial; padding-top: 100px; }
-        #tap { font-size: 150px; cursor: pointer; display: block; margin: 20px auto; }
-        .score { font-size: 50px; font-weight: bold; }
-        button { background: #f3ba2f; border: none; padding: 20px; border-radius: 10px; font-weight: bold; width: 80%; font-size: 20px; }
+        :root { --accent: #2fb9f3; --bg: #000000; --card: #151515; --text: #ffffff; }
+        body { font-family: 'Roboto', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; user-select: none; }
+        
+        /* الهيدر العلوي */
+        .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: #111; }
+        .balance-pill { background: #1c1c1c; padding: 5px 15px; border-radius: 20px; display: flex; align-items: center; border: 1px solid #333; }
+        .usdt-icon { width: 20px; margin-left: 8px; }
+
+        /* منطقة التعدين */
+        .mining-header { text-align: center; margin-top: 20px; }
+        .status-tag { background: #1a1a1a; padding: 5px 20px; border-radius: 10px; font-size: 0.8rem; border: 1px solid #333; }
+        .timer { font-size: 2.5rem; font-weight: bold; margin: 10px 0; font-family: monospace; }
+
+        /* صورة المعالج (الـ GPU) */
+        .gpu-container { display: flex; flex-direction: column; align-items: center; margin: 20px 0; position: relative; }
+        .gpu-img { width: 220px; filter: drop-shadow(0 0 20px rgba(47, 185, 243, 0.2)); transition: 0.3s; cursor: pointer; }
+        .gpu-img:active { transform: scale(0.95); }
+        .hashes { font-size: 1.5rem; font-weight: bold; margin-top: 10px; }
+
+        /* كروت البيانات */
+        .info-card { background: var(--card); margin: 15px; padding: 15px; border-radius: 15px; border: 1px solid #222; }
+        .power-title { color: #888; font-size: 0.9rem; }
+        .power-value { font-size: 1.4rem; font-weight: bold; margin: 5px 0; }
+        
+        .btn-main { background: var(--accent); color: white; border: none; width: 100%; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        .btn-outline { background: #1a1a1a; border: 1px solid var(--accent); color: var(--accent); width: 100%; padding: 10px; border-radius: 10px; margin-top: 10px; }
+
+        /* القائمة السفلية */
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #0a0a0a; border-top: 1px solid #222; padding: 10px 0; }
+        .nav-item { flex: 1; text-align: center; font-size: 0.7rem; color: #555; }
+        .nav-item.active { color: white; }
+        .nav-icon { font-size: 1.5rem; display: block; margin-bottom: 2px; }
+
+        /* نافذة المتجر */
+        #shop { position: fixed; bottom: -100%; left: 0; width: 100%; height: 70%; background: #111; border-top: 2px solid var(--accent); border-radius: 20px 20px 0 0; transition: 0.4s; z-index: 1000; padding: 20px; box-sizing: border-box; }
+        #shop.active { bottom: 0; }
     </style>
 </head>
 <body>
-    <div class="score">الرصيد: <span id="num">0</span></div>
-    <div id="tap">🧍‍♂️</div>
-    <button onclick="getAds()">📺 مشاهدة إعلان أرباح</button>
+
+    <div class="top-nav">
+        <div>☰ 🇱🇾</div>
+        <div class="balance-pill">
+            <span id="usdt-bal">0.000000</span>
+            <img src="https://cryptologos.cc/logos/tether-usdt-logo.png" class="usdt-icon">
+            <span style="color:var(--accent); margin-right:10px; font-size:1.2rem;">+</span>
+        </div>
+    </div>
+
+    <div class="mining-header">
+        <span class="status-tag">MINING STARTED</span>
+        <div class="timer" id="timer">11:59:59</div>
+    </div>
+
+    <div class="gpu-container">
+        <div id="tapArea" style="font-size: 100px;">📟</div>
+        <div class="hashes"><span id="hashes">0.00000</span> <span style="color:#888; font-size:0.9rem;">Hashes</span></div>
+    </div>
+
+    <div class="info-card">
+        <div class="power-title">Current power</div>
+        <div class="power-value"><span id="gpu-power">100</span> GPU</div>
+        <button class="btn-main" onclick="openShop()">Buy power in the store</button>
+        <p style="font-size:0.7rem; color:#666; text-align:center; margin-top:10px;">*Exchange Hashes to USDT to withdraw money</p>
+    </div>
+
+    <div style="display:flex; gap:10px; padding:0 15px;">
+        <div class="info-card" style="flex:1; margin:0; text-align:center;">
+            <div style="font-size:0.8rem; color:#888;">Mined Hashes</div>
+            <div id="mined-hashes" style="font-weight:bold;">0.00</div>
+            <button class="btn-outline" style="font-size:0.8rem;" onclick="exchange()">Exchange 🔄</button>
+        </div>
+    </div>
+
+    <div id="shop">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3>Store - Upgrade GPU</h3>
+            <button onclick="closeShop()" style="background:none; border:none; color:white; font-size:1.5rem;">✕</button>
+        </div>
+        <div style="margin-top:20px;">
+            <div class="info-card" style="margin:5px 0; display:flex; justify-content:space-between; align-items:center;">
+                <div><b>Level 1 GPU</b><br><small>+500 Power</small></div>
+                <button class="btn-main" style="width:auto; padding:5px 15px;" onclick="buyPower(1000, 500)">1000 H</button>
+            </div>
+            <div class="info-card" style="margin:10px 0; background:#000;">
+                <p style="font-size:0.8rem; color:#888;">Deposit USDT (TRC20):</p>
+                <code style="color:var(--accent); font-size:0.7rem;">TNNFBZEbTgU1q2xKhVBC8CwrbzCmEL3bpX</code>
+            </div>
+        </div>
+    </div>
+
+    <div style="height: 100px;"></div> <div class="bottom-nav">
+        <div class="nav-item"><span class="nav-icon">📊</span>Power</div>
+        <div class="nav-item" onclick="showAds()"><span class="nav-icon">📺</span>Earn</div>
+        <div class="nav-item active"><span class="nav-icon">⚙️</span>Miner</div>
+        <div class="nav-item"><span class="nav-icon">💰</span>Withdraw</div>
+    </div>
 
     <script>
-        let score = 0;
-        // النقر (يعمل 100%)
-        document.getElementById('tap').onclick = function() {
-            score += 10;
-            document.getElementById('num').innerText = score;
-            if (window.Telegram.WebApp.HapticFeedback) {
-                window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
-            }
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let hashes = parseFloat(localStorage.getItem('h')) || 0;
+        let power = parseFloat(localStorage.getItem('p')) || 100;
+        let usdt = parseFloat(localStorage.getItem('u')) || 0;
+
+        function update() {
+            document.getElementById('hashes').innerText = hashes.toFixed(5);
+            document.getElementById('mined-hashes').innerText = hashes.toFixed(5);
+            document.getElementById('gpu-power').innerText = power.toLocaleString();
+            document.getElementById('usdt-bal').innerText = usdt.toFixed(6);
+            
+            localStorage.setItem('h', hashes);
+            localStorage.setItem('p', power);
+            localStorage.setItem('u', usdt);
+        }
+
+        // التعدين التلقائي بناءً على القوة
+        setInterval(() => {
+            hashes += (power / 10000);
+            update();
+        }, 1000);
+
+        // النقر لزيادة الـ Hashes يدوياً
+        document.getElementById('tapArea').onclick = () => {
+            hashes += (power / 1000);
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            update();
         };
 
-        // الإعلانات (برقمك 20473)
-        function getAds() {
-            if (!window.Adsgram) return alert("الخادم لم يحمل");
-            window.Adsgram.init({ blockId: "20473" }).show().then(() => {
-                score += 5000;
-                document.getElementById('num').innerText = score;
-                alert("مبروك 5000 نقطة");
-            }).catch(() => alert("لا توجد إعلانات متوفرة الآن"));
+        function exchange() {
+            if(hashes > 100) {
+                usdt += (hashes / 100000);
+                hashes = 0;
+                update();
+                tg.showAlert("Successfully exchanged to USDT!");
+            } else {
+                tg.showAlert("Minimum 100 Hashes required to exchange.");
+            }
         }
+
+        function showAds() {
+            if(!window.Adsgram) return tg.showAlert("Ad server busy...");
+            window.Adsgram.init({ blockId: "20473" }).show().then(() => {
+                power += 200; // مكافأة مشاهدة الإعلان هي زيادة القوة
+                update();
+                tg.showAlert("Power increased by +200 GPU!");
+            }).catch(() => tg.showAlert("No ads available right now."));
+        }
+
+        function openShop() { document.getElementById('shop').classList.add('active'); }
+        function closeShop() { document.getElementById('shop').classList.remove('active'); }
+        
+        function buyPower(cost, pAdd) {
+            if(hashes >= cost) {
+                hashes -= cost;
+                power += pAdd;
+                update();
+                tg.showAlert("Power Upgraded!");
+            } else {
+                tg.showAlert("Not enough Hashes!");
+            }
+        }
+
+        update();
     </script>
 </body>
 </html>
