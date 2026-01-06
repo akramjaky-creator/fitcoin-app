@@ -1,70 +1,42 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FitCoin Pro</title>
+    <title>FitCoin</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://sad.adsgram.ai/js/adsgram-ad-sdk.js"></script>
     <style>
-        :root { --gold: #f3ba2f; --dark-bg: #0b0e11; --card-bg: #1c1f24; }
-        body { font-family: sans-serif; background: var(--dark-bg); color: white; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        
-        .header { display: flex; justify-content: space-around; padding: 10px; background: var(--card-bg); border-bottom: 2px solid var(--gold); }
-        .stat { text-align: center; }
-        .stat b { color: var(--gold); display: block; }
-
-        .balance-area { text-align: center; margin: 20px 0; }
-        #balance { font-size: 3rem; font-weight: bold; }
-
-        .game-area { flex: 1; display: flex; justify-content: center; align-items: center; }
-        .tap-circle { width: 250px; height: 250px; background: radial-gradient(circle, #333, #000); border-radius: 50%; border: 5px solid #444; display: flex; justify-content: center; align-items: center; font-size: 100px; cursor: pointer; transition: 0.1s; }
-        .tap-circle:active { transform: scale(0.9); }
-
-        /* المتجر السفلي */
-        #shop { position: fixed; bottom: -100%; left: 0; width: 100%; height: 60%; background: #16191d; border-top: 3px solid var(--gold); border-radius: 20px 20px 0 0; transition: 0.4s; z-index: 100; padding: 20px; box-sizing: border-box; overflow-y: auto; }
-        #shop.open { bottom: 0; }
-        .item { background: #252930; padding: 10px; margin: 10px 0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .buy-btn { background: var(--gold); border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; }
-
-        .nav { display: flex; background: var(--card-bg); padding: 15px 0; }
-        .nav-link { flex: 1; text-align: center; color: #888; cursor: pointer; font-size: 14px; }
+        body { background: #000; color: #f3ba2f; text-align: center; font-family: Arial; padding-top: 100px; }
+        #tap { font-size: 150px; cursor: pointer; display: block; margin: 20px auto; }
+        .score { font-size: 50px; font-weight: bold; }
+        button { background: #f3ba2f; border: none; padding: 20px; border-radius: 10px; font-weight: bold; width: 80%; font-size: 20px; }
     </style>
 </head>
 <body>
+    <div class="score">الرصيد: <span id="num">0</span></div>
+    <div id="tap">🧍‍♂️</div>
+    <button onclick="getAds()">📺 مشاهدة إعلان أرباح</button>
 
-    <div class="header">
-        <div class="stat">الربح/ساعة <b id="pph">0</b></div>
-        <div class="stat">المستوى <b style="color:white">معدن</b></div>
-    </div>
+    <script>
+        let score = 0;
+        // النقر (يعمل 100%)
+        document.getElementById('tap').onclick = function() {
+            score += 10;
+            document.getElementById('num').innerText = score;
+            if (window.Telegram.WebApp.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+            }
+        };
 
-    <div class="balance-area">
-        <div id="balance">0</div>
-        <div style="color:var(--gold)">FITCOIN</div>
-    </div>
-
-    <div class="game-area">
-        <div class="tap-circle" id="btn">🧍‍♂️</div>
-    </div>
-
-    <div id="shop">
-        <div style="display:flex; justify-content:space-between">
-            <h3>المتجر 🛒</h3>
-            <button onclick="closeShop()" style="background:none; color:white; border:none; font-size:20px">X</button>
-        </div>
-        <div class="item">
-            <span>👟 حذاء (+500/ساعة)</span>
-            <button class="buy-btn" onclick="buy(5000, 500)">5K</button>
-        </div>
-        <div class="item">
-            <span>👕 قميص (+1200/ساعة)</span>
-            <button class="buy-btn" onclick="buy(12000, 1200)">12K</button>
-        </div>
-        <hr>
-        <p style="font-size:12px; color:#888">عنوان الإيداع USDT:</p>
-        <small style="word-break:break-all; color:var(--gold)">TNNFBZEbTgU1q2xKhVBC8CwrbzCmEL3bpX</small>
-    </div>
-
-    <div class="nav">
-        <div class="nav-link" onclick="location.reload()">🏠 الرئيسية</div>
-        <div class="nav-link" onclick="openShop()">🛒 المتجر</div>
+        // الإعلانات (برقمك 20473)
+        function getAds() {
+            if (!window.Adsgram) return alert("الخادم لم يحمل");
+            window.Adsgram.init({ blockId: "20473" }).show().then(() => {
+                score += 5000;
+                document.getElementById('num').innerText = score;
+                alert("مبروك 5000 نقطة");
+            }).catch(() => alert("لا توجد إعلانات متوفرة الآن"));
+        }
+    </script>
+</body>
+</html>
