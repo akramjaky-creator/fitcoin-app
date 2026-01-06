@@ -9,12 +9,15 @@
     <style>
         :root { --main: #f3ba2f; --bg: #0b0e11; --card: #1c1f24; }
         body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; }
-        .header { display: flex; width: 100%; justify-content: space-around; padding: 15px 0; background: var(--card); border-bottom: 2px solid var(--main); }
-        .balance { font-size: 3.5rem; font-weight: bold; margin: 20px 0; color: var(--main); }
-        .character-zone { width: 250px; height: 250px; background: radial-gradient(circle, #3a3f47, #1c1f24); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 100px; border: 8px solid #2d333b; cursor: pointer; transition: 0.1s; box-shadow: 0 0 30px rgba(243,186,47,0.2); }
-        .character-zone:active { transform: scale(0.9); }
-        .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: var(--card); padding: 15px 0; justify-content: space-around; }
-        .nav-item { text-align: center; font-size: 0.8rem; color: #888; cursor: pointer; }
+        .header { display: flex; width: 100%; justify-content: space-around; padding: 15px 0; background: var(--card); border-bottom: 2px solid var(--main); z-index: 10; }
+        .balance-container { text-align: center; margin-top: 40px; }
+        .balance { font-size: 3.5rem; font-weight: bold; color: var(--main); text-shadow: 0 0 20px rgba(243,186,47,0.3); }
+        .character-zone { width: 260px; height: 260px; background: radial-gradient(circle, #3a3f47, #1c1f24); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 110px; border: 8px solid #2d333b; cursor: pointer; transition: transform 0.1s; margin-top: 30px; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
+        .character-zone:active { transform: scale(0.95); }
+        .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: var(--card); padding: 15px 0; justify-content: space-around; border-top: 1px solid #333; }
+        .nav-item { text-align: center; font-size: 0.8rem; color: #888; cursor: pointer; flex: 1; }
+        .nav-item.active { color: var(--main); }
+        .btn-ad { background: var(--main); color: black; border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; margin-top: 20px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -22,45 +25,88 @@
         <div>الربح/ساعة<br><span id="pph" style="color:var(--main)">+150</span></div>
         <div>المستوى<br><span id="lvl" style="color:var(--main)">مبتدئ</span></div>
     </div>
-    <div class="balance" id="score">0</div>
+
+    <div class="balance-container">
+        <div class="balance" id="score">0</div>
+        <div style="color: #888;">عملة FIT</div>
+    </div>
+
     <div class="character-zone" id="tapBtn">🐹</div>
+
     <div class="nav">
-        <div class="nav-item">🏠<br>الرئيسية</div>
+        <div class="nav-item active">🏠<br>الرئيسية</div>
         <div class="nav-item" onclick="showAd()">📺<br>أرباح</div>
         <div class="nav-item" onclick="invite()">👥<br>الأصدقاء</div>
     </div>
-    <script>
-        let score = parseInt(localStorage.getItem('fscore')) || 0;
-        
-        // استخدام الرقم الذي استخرجته أنت من الصورة الأخيرة
-        const blockId = "20473"; 
 
-        const AdController = window.Adsgram ? window.Adsgram.init({ blockId: blockId }) : null;
-        
-        function update() {
+    <script>
+        // إعدادات البوت الأساسية
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // توسيع الشاشة بالكامل
+
+        let score = parseInt(localStorage.getItem('fscore')) || 0;
+        const blockId = "20473"; // رقم Block ID الخاص بك المستخرج من الصور
+
+        // تحديث الواجهة
+        function updateUI() {
             document.getElementById('score').innerText = score.toLocaleString();
             localStorage.setItem('fscore', score);
         }
 
-        document.getElementById('tapBtn').addEventListener('click', () => { 
-            score += 10; 
-            update(); 
+        // نظام النقر
+        document.getElementById('tapBtn').addEventListener('click', (e) => {
+            score += 10;
+            updateUI();
+            // اهتزاز بسيط عند النقر
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
         });
 
+        // نظام الإعلانات المطور
         function showAd() {
-            if(!AdController) return alert("جاري الاتصال بـ AdsGram...");
-            AdController.show().then(() => {
-                score += 5000; 
-                update();
-                alert("مبروك! ربحت 5000 نقطة لمشاهدة الإعلان");
-            }).catch(() => alert("يجب إكمال الفيديو للحصول على المكافأة"));
+            // التحقق من وجود المكتبة أولاً
+            if (!window.Adsgram) {
+                alert("عذراً، نظام الإعلانات لم يكتمل تحميله بعد. أعد فتح البوت.");
+                return;
+            }
+
+            const AdController = window.Adsgram.init({ blockId: blockId });
+            
+            // إظهار رسالة بسيطة للمستخدم
+            tg.showConfirm("هل تريد مشاهدة إعلان للحصول على 5,000 نقطة؟", (confirmed) => {
+                if (confirmed) {
+                    AdController.show()
+                        .then((result) => {
+                            score += 5000;
+                            updateUI();
+                            tg.showAlert("مبروك! تمت إضافة 5,000 نقطة لرصيدك.");
+                        })
+                        .catch((error) => {
+                            console.error(error);
+                            tg.showAlert("لا توجد إعلانات متوفرة حالياً في منطقتك، حاول بعد قليل.");
+                        });
+                }
+            });
         }
 
+        // نظام الإحالة
         function invite() {
-            const url = "https://t.me/Botcoinfit_bot";
-            window.open(`https://t.me/share/url?url=${url}&text=اربح معي العملات بالمشي!`);
+            const inviteLink = "https://t.me/Botcoinfit_bot";
+            const text = "انضم إلي في FitCoin وابدأ بجني الأرباح!";
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(inviteLink)}&text=${encodeURIComponent(text)}`);
         }
-        update();
+
+        // تشغيل حساس الحركة (الربح بالمشي)
+        if (window.DeviceMotionEvent) {
+            window.addEventListener('devicemotion', (event) => {
+                let acc = event.accelerationIncludingGravity;
+                if (Math.abs(acc.x) > 15 || Math.abs(acc.y) > 15) {
+                    score += 1;
+                    updateUI();
+                }
+            });
+        }
+
+        updateUI();
     </script>
 </body>
 </html>
